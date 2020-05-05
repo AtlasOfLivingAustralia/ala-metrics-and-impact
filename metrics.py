@@ -1,7 +1,8 @@
 import requests
 import pandas as pd
+import config
 
-API_KEY = "YOUR_API_KEY_HERE"
+API_KEY = config.API_KEY
 PLUMX_URL = "https://api.elsevier.com/analytics/plumx/doi/"
 ALTMETRIC_URL = "https://api.altmetric.com/v1/doi/"
 SCOPUS_CITATION_URL = "https://api.elsevier.com/content/search/scopus?query=DOI("
