@@ -1,6 +1,7 @@
 import requests
 import pandas as pd
 import config
+import zotero
 
 API_KEY = config.API_KEY
 PLUMX_URL = "https://api.elsevier.com/analytics/plumx/doi/"
@@ -37,14 +38,14 @@ def read_dois(path):
     return pd.read_csv(path)
 
 def write_metrics(df, path):
-    df.to_csv(path)
+    df.to_csv(path, index=False)
     return
 
 def retrieve_plumx_data(doi):
     url = PLUMX_URL + doi + '?apiKey=' + API_KEY
     resp = requests.get(url)
     if resp.status_code != 200:
-        print("No response from plumx for ",doi)
+        print("No response from plumx for ", doi)
         return {}
     data = resp.json()['count_categories']
     stats = {}
