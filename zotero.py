@@ -1,6 +1,7 @@
 from pyzotero import zotero
 import pandas as pd
 import config
+import requests
 
 library_id = config.LIBRARY_ID
 api_key = config.ZOTERO_API_KEY
@@ -13,20 +14,17 @@ def retrieve_zotero_data():
     item_count = zot.num_items()
 
     # get first 100 items
-    items = zot.top(limit=max)
-
+    items = zot.top(limit=100)
     # extract data and get all subsequent items
-    for i in range(item_count // 100):
+    for i in range(item_count // 100 + 1):
         for i in items:
             if is_relevant_item(i):
-                row = extract_item_data(i['data'])
-                print(row)
-                all_data = all_data.append(pd.Series(row), ignore_index=True)
+               row = extract_item_data(i['data'])
+               all_data = all_data.append(pd.Series(row), ignore_index=True)
         try:
-            items = zot.follow()
+            items = zot.follow(limit = 100)
         except requests.exceptions.ConnectionError:
             break
-
 
     all_data.to_csv('zotero_data.csv', index=False)
 
@@ -69,5 +67,3 @@ def format_tags(tags):
     for t in tags:
         tag_list.append(t['tag'])
     return tag_list
-
-
