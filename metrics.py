@@ -8,7 +8,7 @@ PLUMX_URL = "https://api.elsevier.com/analytics/plumx/doi/"
 ALTMETRIC_URL = "https://api.altmetric.com/v1/doi/"
 SCOPUS_CITATION_URL = "https://api.elsevier.com/content/search/scopus?query=DOI("
 SCOPUS_JOURNAL_URL = "https://api.elsevier.com/content/serial/title/issn/"
-IN_PATH = 'dois.csv'
+IN_PATH = 'zotero_data.csv'
 OUTPATH = 'results.csv'
 
 def main():
@@ -19,18 +19,20 @@ def main():
     for i,r in df.iterrows():
 
         doi = r['DOI']
-        plumx_data = retrieve_plumx_data(doi)
-        altmetric_data = retrieve_altmetric_data(doi)
-        scopus_cited_data = retrieve_scopus_citation_data(doi)
-        issn = scopus_cited_data['ISSN [Scopus]']
-        scopus_journal_data = retrieve_scopus_journal_data(issn)
+        if doi != '':
+            plumx_data = retrieve_plumx_data(doi)
+            altmetric_data = retrieve_altmetric_data(doi)
+            scopus_cited_data = retrieve_scopus_citation_data(doi)
+            issn = scopus_cited_data['ISSN [Scopus]']
+            scopus_journal_data = retrieve_scopus_journal_data(issn)
 
-        # join metrics together in row
-        row = {'DOI': doi, **plumx_data, **altmetric_data, **scopus_cited_data, **scopus_journal_data}
+            # join metrics together in row
+            row = {'DOI': doi, **plumx_data, **altmetric_data, **scopus_cited_data, **scopus_journal_data}
 
-        #
-        scores_df = scores_df.append(pd.Series(row), ignore_index=True)
+            #
+            scores_df = scores_df.append(pd.Series(row), ignore_index=True)
 
+        write_metrics(scores_df, OUTPATH)
     write_metrics(scores_df, OUTPATH)
 
 
@@ -42,12 +44,16 @@ def write_metrics(df, path):
     return
 
 def retrieve_plumx_data(doi):
-    url = PLUMX_URL + doi + '?apiKey=' + API_KEY
+    url = PLUMX_URL + str(doi) + '?apiKey=' + API_KEY
     resp = requests.get(url)
     if resp.status_code != 200:
+        print(url)
         print("No response from plumx for ", doi)
         return {}
-    data = resp.json()['count_categories']
+    try:
+        data = resp.json()['count_categories']
+    except KeyError:
+        return {}
     stats = {}
 
     for i in data:
@@ -70,12 +76,13 @@ def retrieve_plumx_data(doi):
 
 
 def retrieve_altmetric_data(doi):
-    url = ALTMETRIC_URL + doi
+    url = ALTMETRIC_URL + str(doi)
     resp = requests.get(url)
     if resp.status_code != 200:
+        print(url)
         print("No response from altmetric for ",doi)
         return {}
-
+    print("altmetric working")
     data = resp.json()
     stats = {}
     stats['Score [Altmetric]'] = data['score']
@@ -90,9 +97,10 @@ def retrieve_altmetric_data(doi):
     return stats
 
 def retrieve_scopus_citation_data(doi):
-    url = SCOPUS_CITATION_URL + doi + ")&apiKey=" + API_KEY
+    url = SCOPUS_CITATION_URL + str(doi) + ")&apiKey=" + API_KEY
     resp = requests.get(url)
     if resp.status_code != 200:
+        print(url)
         error("No valid result")
         return {}
     data = resp.json()['search-results']['entry'][0]
@@ -106,7 +114,7 @@ def retrieve_scopus_citation_data(doi):
 def retrieve_scopus_journal_data(issn):
     if issn == "":
         return {}
-    url = SCOPUS_JOURNAL_URL + issn + '?apiKey=' + API_KEY
+    url = SCOPUS_JOURNAL_URL + str(issn) + '?apiKey=' + API_KEY
     resp = requests.get(url)
     data = resp.json()
     try:
