@@ -2,6 +2,10 @@ import requests
 import pandas as pd
 import config
 import zotero
+from apiclient.http import MediaFileUpload
+from oauth2client.service_account import ServiceAccountCredentials
+from googleapiclient.discovery import build
+from datetime import date
 
 API_KEY = config.API_KEY
 PLUMX_URL = "https://api.elsevier.com/analytics/plumx/doi/"
@@ -34,6 +38,7 @@ def main():
 
         write_metrics(scores_df, OUTPATH)
     write_metrics(scores_df, OUTPATH)
+    write_to_google_sheet()
 
 
 def read_dois(path):
@@ -127,7 +132,60 @@ def retrieve_scopus_journal_data(issn):
         snip = ''
     return {'SJR': sjr, 'SNIP': snip}
 
+def callback(request_id, response, exception):
+    if exception:
+        # Handle error
+        print(exception)
+    else:
+        print("Permission Id: %s" % response.get('id'))
 
+
+def write_to_google_sheet():
+
+    # Build filename using today's date
+    today = date.today()
+    date_str = str(today.strftime("%d_%m_%y"))
+    file_name = date_str + '_zotero_data'
+    file_metadata = {
+    'name': file_name,
+    'mimeType': 'application/vnd.google-apps.spreadsheet'
+    }
+
+    # use google service account to create google sheet
+    scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+
+    # creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+
+    with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+
+    drive_service = build('drive', 'v3', credentials=creds)
+    media = MediaFileUpload('zotero_data.csv',
+                            mimetype='text/csv',
+                            resumable=True)
+
+    file = drive_service.files().create(body=file_metadata,
+                                        media_body=media,
+                                        fields='id').execute()
+
+    # retrieve id and use to give permission to analytics account
+    id = file.get('id')
+    print(id
+    )
+
+    batch = drive_service.new_batch_http_request(callback=callback)
+    user_permission = {
+    'type': 'user',
+    'role': 'writer',
+    'emailAddress': 'analytics@ala.org.au'
+    }
+    batch.add(drive_service.permissions().create(
+    fileId=id,
+    body=user_permission,
+    fields='id'
+    ))
+
+    batch.execute()
 
 if __name__ == '__main__':
     main()
