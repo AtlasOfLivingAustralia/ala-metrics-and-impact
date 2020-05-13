@@ -13,11 +13,11 @@ ALTMETRIC_URL = "https://api.altmetric.com/v1/doi/"
 SCOPUS_CITATION_URL = "https://api.elsevier.com/content/search/scopus?query=DOI("
 SCOPUS_JOURNAL_URL = "https://api.elsevier.com/content/serial/title/issn/"
 IN_PATH = 'zotero_data.csv'
-OUTPATH = 'results.csv'
+OUTPATH = 'all_data.csv'
 
 def main():
+    # read in zotero data
     df = read_dois(IN_PATH)
-    scores_df = pd.DataFrame()
 
     # loop through dois and retrieve metrics for each
     for i,r in df.iterrows():
@@ -36,8 +36,14 @@ def main():
             #
             scores_df = scores_df.append(pd.Series(row), ignore_index=True)
 
-        write_metrics(scores_df, OUTPATH)
-    write_metrics(scores_df, OUTPATH)
+    # set index of zotero and scores dataframes for easier joining
+    df.set_index('DOI',inplace = True)
+    scores_df.set_index('DOI',inplace = True)
+
+    # join the dataframes and write to csv
+    all_data = pd.concat([scores_df,df],axis = 1)
+    write_metrics(all_data, OUTPATH)
+
     write_to_google_sheet()
 
 
@@ -47,6 +53,7 @@ def read_dois(path):
 def write_metrics(df, path):
     df.to_csv(path, index=False)
     return
+
 
 def retrieve_plumx_data(doi):
     url = PLUMX_URL + str(doi) + '?apiKey=' + API_KEY
@@ -132,6 +139,7 @@ def retrieve_scopus_journal_data(issn):
         snip = ''
     return {'SJR': sjr, 'SNIP': snip}
 
+
 def callback(request_id, response, exception):
     if exception:
         # Handle error
@@ -154,13 +162,10 @@ def write_to_google_sheet():
     # use google service account to create google sheet
     scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
 
-    # creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-
-    with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
+    creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
 
     drive_service = build('drive', 'v3', credentials=creds)
-    media = MediaFileUpload('zotero_data.csv',
+    media = MediaFileUpload('all_data.csv',
                             mimetype='text/csv',
                             resumable=True)
 
