@@ -3,7 +3,6 @@ import pandas as pd
 import json
 
 GBIF_URL_PREFIX="https://www.gbif.org/api/resource/search?limit=999&contentType=literature&gbifDatasetKey="
-keys = pd.read_csv('keys.csv')
 
 DATA_RESOURCES_URL = "https://biocache-ws.ala.org.au/ws/occurrence/facets?facets=data_resource_uid&flimit=1000"
 DR_INFO_URL = "https://collections.ala.org.au/ws/dataResource/"
@@ -12,7 +11,8 @@ DR_INFO_URL = "https://collections.ala.org.au/ws/dataResource/"
 def main():
     i = 0
     publications = []
-    for k in keys['key']:
+    keys = retrieve_gbif_registry_keys()
+    for k in keys:
         url = GBIF_URL_PREFIX + k
         resp = requests.get(url)
         results = resp.json()['results']
@@ -22,7 +22,7 @@ def main():
             if 'identifiers' in r.keys() and 'doi' in r['identifiers'].keys():
                 doi = r['identifiers']['doi']
                 info = {'id':id,'doi':doi[0]}
-                
+
             # no doi present so return other information
             else:
                 info = {'id':id}
@@ -71,7 +71,6 @@ def retrieve_gbif_registry_keys():
         except (KeyError,json.decoder.JSONDecodeError):
             print('no key found')
             print(dr)
-    print(keys)
     return keys
 
 if __name__ == '__main__':
