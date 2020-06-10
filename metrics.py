@@ -150,12 +150,8 @@ def callback(request_id, response, exception):
 
 def write_to_google_sheet():
 
-    # Build filename using today's date
-    today = date.today()
-    date_str = str(today.strftime("%d_%m_%y"))
-    file_name = date_str + '_zotero_data'
     file_metadata = {
-    'name': file_name,
+    'name': 'Zotero_Python',
     'mimeType': 'application/vnd.google-apps.spreadsheet'
     }
 
