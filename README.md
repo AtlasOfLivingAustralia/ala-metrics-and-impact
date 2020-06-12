@@ -70,4 +70,4 @@ Once you've got a list of DOIs run the following command with the file with the 
 ```
 python metrics.py INPUT_FILE
 ```
-This will create a `metrics_publications.csv` file with the mtreics for all publications.
+This will create a `metrics_publications.csv` file with the metrics for all publications.
