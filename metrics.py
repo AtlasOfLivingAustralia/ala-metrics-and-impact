@@ -2,10 +2,8 @@ import requests
 import pandas as pd
 import config
 import zotero
-from apiclient.http import MediaFileUpload
-from oauth2client.service_account import ServiceAccountCredentials
-from googleapiclient.discovery import build
-from datetime import date
+import sys
+
 
 API_KEY = config.API_KEY
 PLUMX_URL = "https://api.elsevier.com/analytics/plumx/doi/"
@@ -13,11 +11,11 @@ ALTMETRIC_URL = "https://api.altmetric.com/v1/doi/"
 SCOPUS_CITATION_URL = "https://api.elsevier.com/content/search/scopus?query=DOI("
 SCOPUS_JOURNAL_URL = "https://api.elsevier.com/content/serial/title/issn/"
 IN_PATH = 'zotero_data.csv'
-OUTPATH = 'all_data.csv'
+OUTPATH = 'publication_metrics.csv'
 
-def main():
+def main(in_path):
     # read in zotero data
-    df = read_dois(IN_PATH)
+    df = read_dois(in_path)
 
     # loop through dois and retrieve metrics for each
     for i,r in df.iterrows():
@@ -46,6 +44,11 @@ def main():
 
     write_to_google_sheet()
 
+def merge_scores_with_publications(scores_df,publication_df):
+    publication_df.set_index('title',inplace = True)
+    scores_df.set_index('title',inplace = True)
+    all_data = pd.concat([scores_df,df],axis = 1)
+    return all_data
 
 def read_dois(path):
     return pd.read_csv(path)
@@ -59,8 +62,8 @@ def retrieve_plumx_data(doi):
     url = PLUMX_URL + str(doi) + '?apiKey=' + API_KEY
     resp = requests.get(url)
     if resp.status_code != 200:
-        print(url)
-        print("No response from plumx for ", doi)
+        # print(url)
+        # print("No response from plumx for ", doi)
         return {}
     try:
         data = resp.json()['count_categories']
@@ -91,10 +94,10 @@ def retrieve_altmetric_data(doi):
     url = ALTMETRIC_URL + str(doi)
     resp = requests.get(url)
     if resp.status_code != 200:
-        print(url)
-        print("No response from altmetric for ",doi)
+        # print(url)
+        # print("No response from altmetric for ",doi)
         return {}
-    print("altmetric working")
+    # print("altmetric working")
     data = resp.json()
     stats = {}
     stats['Score [Altmetric]'] = data['score']
@@ -112,8 +115,8 @@ def retrieve_scopus_citation_data(doi):
     url = SCOPUS_CITATION_URL + str(doi) + ")&apiKey=" + API_KEY
     resp = requests.get(url)
     if resp.status_code != 200:
-        print(url)
-        error("No valid result")
+        # print(url)
+        # error("No valid result")
         return {}
     data = resp.json()['search-results']['entry'][0]
     stats = {}
@@ -140,53 +143,14 @@ def retrieve_scopus_journal_data(issn):
     return {'SJR': sjr, 'SNIP': snip}
 
 
-def callback(request_id, response, exception):
-    if exception:
-        # Handle error
-        print(exception)
-    else:
-        print("Permission Id: %s" % response.get('id'))
 
 
-def write_to_google_sheet():
-
-    file_metadata = {
-    'name': 'Zotero_Python',
-    'mimeType': 'application/vnd.google-apps.spreadsheet'
-    }
-
-    # use google service account to create google sheet
-    scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-
-    creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
-
-    drive_service = build('drive', 'v3', credentials=creds)
-    media = MediaFileUpload('all_data.csv',
-                            mimetype='text/csv',
-                            resumable=True)
-
-    file = drive_service.files().create(body=file_metadata,
-                                        media_body=media,
-                                        fields='id').execute()
-
-    # retrieve id and use to give permission to analytics account
-    id = file.get('id')
-    print(id
-    )
-
-    batch = drive_service.new_batch_http_request(callback=callback)
-    user_permission = {
-    'type': 'user',
-    'role': 'writer',
-    'emailAddress': 'analytics@ala.org.au'
-    }
-    batch.add(drive_service.permissions().create(
-    fileId=id,
-    body=user_permission,
-    fields='id'
-    ))
 
     batch.execute()
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) < 2:
+        print('Error: Please provide a path to an input file')
+        exit()
+    infile = sys.argv[1]
+    main(infile)

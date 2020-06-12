@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import logging
 from math import isnan
+import numpy as np
 
 GBIF_URL_PREFIX="https://www.gbif.org/api/resource/search?limit=999&contentType=literature&gbifDatasetKey="
 DATASET_SEARCH_URL = "https://www.gbif.org/api/dataset/search?q="
@@ -24,13 +25,13 @@ def main(log_level=logging.INFO):
     # set up logger
     logging.basicConfig(filename='gbif_publication_data.log',level=log_level)
 
-    retrieve_gbif_registry_keys()
+    # retrieve_gbif_registry_keys()
 
     # load data resources with keys
     df = pd.read_csv('gbif_registry_keys.csv')
 
-    publications = []
-
+    publications = {}
+    checked_results = []
     # iterate through data resources
     for i,r in df.iterrows():
         # gbif key exists
@@ -48,14 +49,19 @@ def main(log_level=logging.INFO):
         results = registry_data_from_key(key)
 
         for r in results:
-            data = publication_data(r)
-            publications.append(data)
+            # each publication has a unique id, use this to distinguish
+            id = r['id']
+            if r['id'] in publications.keys():
+                # append the gbif keys to the 'referenced_in list'
+                publications[id]['referenced_in'].append(key)
+            else:
+                data = publication_data(r)
+                data['referenced_in'] = [key]
+                publications[id] = data
 
-    df = pd.DataFrame(publications)
-    df.set_index('id', inplace=True)
-    df.fillna('',inplace=True)
-    df.drop_duplicates(inplace = True)
-    df.to_csv('publications_from_gbif.csv')
+    df = pd.DataFrame.from_dict(publications, orient='index')
+    df.replace(np.nan,0, inplace=True)
+    df.to_csv('publications_from_gbif.csv', index = False)
 
 
 def get_key_from_doi(doi):
@@ -105,16 +111,21 @@ def publication_data(result):
     data = {'id':id, 'created':date}
 
     doi = publication_doi(result)
-    if doi:
-        data['doi'] = doi
-    else:
-        data['first_author'] = format_author(result['authors']) if 'authors' in result.keys() else ""
-        data['source'] = result['source'] if 'source' in result.keys() else ''
-        data['title'] = result['title'] if 'title' in result.keys() else ''
-        data['year'] = int(result['year']) if 'year' in result.keys() else ''
-        data['websites'] = format_websites(result['websites']) if 'websites' in result.keys() else ''
+    data['doi'] = result['identifiers']['doi'] if doi else ''
+    data['first_author'] = format_author(result['authors']) if 'authors' in result.keys() else ""
+    data['source'] = result['source'] if 'source' in result.keys() else ''
+    data['title'] = result['title'] if 'title' in result.keys() else ''
+    data['year'] = int(result['year']) if 'year' in result.keys() else ''
+    data['websites'] = format_websites(result['websites']) if 'websites' in result.keys() else ''
+    tags = tag_data(result['tags']) if 'tags' in result.keys() else {}
+    topics = topic_data(result['topics']) if 'topics' in result.keys() else {}
+
+    data = {**data, **tags, **topics}
+
 
     return data
+
+
 
 
 def publication_doi(pub):
@@ -124,6 +135,22 @@ def publication_doi(pub):
     except KeyError:
         return False
 
+
+def tag_data(tags):
+    tag_dict = {}
+    for t in tags:
+        # skip tag if it is a doi tag
+        if 'gbifDOI' not in t:
+            tag_name = f'tag- {t}'
+            tag_dict[tag_name] = 1
+    return tag_dict
+
+def topic_data(topics):
+    topic_dict = {}
+    for t in topics:
+        topic_name = f'topic- {t}'
+        topic_dict[topic_name] = 1
+    return topic_dict
 
 def format_author(authors):
     if len(authors) == 0:
@@ -157,11 +184,12 @@ def retrieve_gbif_registry_keys():
                 data['doi'] = resp.json()['doi']
             keys.append(data)
         except (KeyError,json.decoder.JSONDecodeError):
-            print('no key found')
+            # no key was found, do nothing
+            continue
     # write keys to csv for later verification
     df = pd.DataFrame(keys)
     df.to_csv('gbif_registry_keys.csv', index = False)
-    return keys
+    return df
 
 if __name__ == '__main__':
     main()
