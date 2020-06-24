@@ -13,16 +13,17 @@ SCOPUS_JOURNAL_URL = "https://api.elsevier.com/content/serial/title/issn/"
 IN_PATH = 'zotero_data.csv'
 OUTPATH = 'publication_metrics.csv'
 
-def main(in_path):
+def main(in_path, nrow = 'all'):
     # read in zotero data
     df = read_dois(in_path)
 
     scores_df = pd.DataFrame()
-
+    if nrow != 'all':
+        df = df.head(nrow)
     # loop through dois and retrieve metrics for each
     for i,r in df.iterrows():
-
         doi = r['DOI']
+        title = r['title']
         if doi != '' and doi != '-':
             plumx_data = retrieve_plumx_data(doi)
             altmetric_data = retrieve_altmetric_data(doi)
@@ -30,25 +31,22 @@ def main(in_path):
             scopus_journal_data = retrieve_scopus_journal_data(r['ISSN']) if 'ISSN' in r.keys() else {}
 
             # join metrics together in row
-            row = {'DOI': doi, **plumx_data, **altmetric_data, **scopus_cited_data, **scopus_journal_data}
+            row = {'DOI': doi, 'title': title,
+            **plumx_data, **altmetric_data, **scopus_cited_data, **scopus_journal_data}
 
             #
             scores_df = scores_df.append(pd.Series(row), ignore_index=True)
 
-    # set index of zotero and scores dataframes for easier joining
-    df.set_index('DOI',inplace = True)
-    scores_df.set_index('DOI',inplace = True)
-
     # join the dataframes and write to csv
-    all_data = pd.concat([scores_df,df],axis = 1)
+    all_data = merge_scores_with_publications(scores_df,df)
     write_metrics(all_data, OUTPATH)
 
-    write_to_google_sheet()
+    # write_to_google_sheet()
 
 def merge_scores_with_publications(scores_df,publication_df):
     publication_df.set_index('title',inplace = True)
     scores_df.set_index('title',inplace = True)
-    all_data = pd.concat([scores_df,df],axis = 1)
+    all_data = pd.concat([scores_df,publication_df],axis = 1)
     return all_data
 
 def read_dois(path):
@@ -150,4 +148,8 @@ if __name__ == '__main__':
         print('Error: Please provide a path to an input file')
         exit()
     infile = sys.argv[1]
-    main(infile)
+    if len(sys.argv) == 3:
+        nrow = int(sys.argv[2])
+    else:
+        nrow = 'all'
+    main(infile, nrow)
