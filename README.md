@@ -16,7 +16,7 @@ Once the clone is complete, enter the directory containing the code:
 ```
 cd ala-metrics-and-impact
 ```
-Two files are not stored in the repo for security reasons: `client_secret.json` and `config.py`. To get these, ask a metrics developer and then add them to the same directory. Don't change the file names.
+Two files are not stored in the repo for security reasons: `google_secret.json` and `config.py`. To get these, ask a metrics developer and then add them to the same directory. Don't change the file names.
 
 
 You will need `python3` and `pip` installed on your machine, and ideally a virtual environment manager. `pipenv` will be used as the example in this project. 
@@ -73,3 +73,13 @@ Once you've got a list of DOIs run the following command with the file with the 
 python metrics.py INPUT_FILE
 ```
 This will create a `metrics_publications.csv` file with the metrics for all publications.
+
+
+## Write publication metrics to google sheets
+
+To update the google sheet with the publication data you will need to make sure you have `google_secret.json` stored somewhere. 
+Then you can run 
+```
+python google_sheets.py METRICS_FILE SECRET_FILE`
+``` 
+to upload the metrics to google sheets
