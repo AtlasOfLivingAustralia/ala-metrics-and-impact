@@ -117,10 +117,12 @@ def publication_data(result):
     data['title'] = result['title'] if 'title' in result.keys() else ''
     data['year'] = int(result['year']) if 'year' in result.keys() else ''
     data['websites'] = format_websites(result['websites']) if 'websites' in result.keys() else ''
-    tags = tag_data(result['tags']) if 'tags' in result.keys() else {}
-    topics = topic_data(result['topics']) if 'topics' in result.keys() else {}
+    data['type'] = result['literatureType'] if 'literatureType' in result.keys() else ''
+    data['Relevance'] = result['relevance'] if 'relevance' in result.keys() else ''
+    # tags = tag_data(result['tags']) if 'tags' in result.keys() else {}
+    # topics = topic_data(result['topics']) if 'topics' in result.keys() else {}
 
-    data = {**data, **tags, **topics}
+    data = {**data}
 
 
     return data
