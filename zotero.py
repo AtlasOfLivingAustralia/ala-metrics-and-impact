@@ -31,7 +31,7 @@ def retrieve_data(library_id, api_key, library_type, outfile):
 def extract_item_data(data):
     row = {
         'key': data['key'],
-        'type': data['itemType']
+        'type': format_type(data['itemType'])
     }
 
     # additional fields
@@ -48,6 +48,13 @@ def extract_item_data(data):
     row = {**row, **tags}
 
     return row
+
+def format_item_type(type):
+    if type == 'document':
+        return 'Document - other'
+    elif type == 'radioBroadcast':
+        return 'Radio broadcast'
+    return re.sub("([a-z])([A-Z])","\g<1> \g<2>",type).title()
 
 def format_creators(creators):
     creator_list = []
