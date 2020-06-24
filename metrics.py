@@ -17,16 +17,17 @@ def main(in_path):
     # read in zotero data
     df = read_dois(in_path)
 
+    scores_df = pd.DataFrame()
+
     # loop through dois and retrieve metrics for each
     for i,r in df.iterrows():
 
         doi = r['DOI']
-        if doi != '':
+        if doi != '' and doi != '-':
             plumx_data = retrieve_plumx_data(doi)
             altmetric_data = retrieve_altmetric_data(doi)
             scopus_cited_data = retrieve_scopus_citation_data(doi)
-            issn = scopus_cited_data['ISSN [Scopus]']
-            scopus_journal_data = retrieve_scopus_journal_data(issn)
+            scopus_journal_data = retrieve_scopus_journal_data(r['ISSN']) if 'ISSN' in r.keys() else {}
 
             # join metrics together in row
             row = {'DOI': doi, **plumx_data, **altmetric_data, **scopus_cited_data, **scopus_journal_data}
@@ -143,10 +144,6 @@ def retrieve_scopus_journal_data(issn):
     return {'SJR': sjr, 'SNIP': snip}
 
 
-
-
-
-    batch.execute()
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
