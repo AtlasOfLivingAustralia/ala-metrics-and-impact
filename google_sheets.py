@@ -1,53 +1,22 @@
 from apiclient.http import MediaFileUpload
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
+import config
+import gspread
+import sys
+import pandas as pd
+import gspread_pandas
 
+def write_to_sheet(outfile, credentials_path):
+    df = pd.read_csv(outfile)
+    spread = gspread_pandas.Spread(config.SPREADSHEET_ID,
+    config = gspread_pandas.conf.get_config(file_name = credentials_path))
+    spread.df_to_sheet(df, index=False, sheet='Sheet1', start='A1', replace=True)
 
-def write_to_google_sheet():
-
-    file_metadata = {
-    'name': 'Zotero_Python',
-    'mimeType': 'application/vnd.google-apps.spreadsheet'
-    }
-
-    # use google service account to create google sheet
-    scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-
-    creds = Credentials.from_json_keyfile_name('client_secret.json', scope)
-
-    drive_service = build('drive', 'v3', credentials=creds)
-    media = MediaFileUpload('all_data.csv',
-                            mimetype='text/csv',
-                            resumable=True)
-
-    file = drive_service.files().create(body=file_metadata,
-                                        media_body=media,
-                                        fields='id').execute()
-
-    # retrieve id and use to give permission to analytics account
-    id = file.get('id')
-    print(id
-    )
-
-    batch = drive_service.new_batch_http_request(callback=callback)
-    user_permission = {
-    'type': 'user',
-    'role': 'writer',
-    'emailAddress': 'analytics@ala.org.au'
-    }
-    batch.add(drive_service.permissions().create(
-    fileId=id,
-    body=user_permission,
-    fields='id'
-    ))
-
-
-def callback(request_id, response, exception):
-    if exception:
-        # Handle error
-        print(exception)
-    else:
-        print("Permission Id: %s" % response.get('id'))
+    return
 
 if __name__ == '__main__':
-    write_to_google_sheet()
+    if len(sys.argv) < 3:
+        print("Please provide the name of a csv file to read from, and the path to your credentials file")
+        exit(1)
+    write_to_sheet(sys.argv[1], sys.argv[2])
