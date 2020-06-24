@@ -1,8 +1,4 @@
-from apiclient.http import MediaFileUpload
-from oauth2client.service_account import ServiceAccountCredentials
-from googleapiclient.discovery import build
 import config
-import gspread
 import sys
 import pandas as pd
 import gspread_pandas
