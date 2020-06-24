@@ -16,6 +16,8 @@ Once the clone is complete, enter the directory containing the code:
 ```
 cd ala-metrics-and-impact
 ```
+Two files are not stored in the repo for security reasons: `client_secret.json` and `config.py`. To get these, ask a metrics developer and then add them to the same directory. Don't change the file names.
+
 
 You will need `python3` and `pip` installed on your machine, and ideally a virtual environment manager. `pipenv` will be used as the example in this project. 
 To install `pipenv` run: 
