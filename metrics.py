@@ -16,12 +16,15 @@ OUTPATH = 'publication_metrics.csv'
 def main(in_path, nrow = 'all'):
     # read in zotero data
     df = read_dois(in_path)
-
+    print(len(set(df['DOI'])))
     scores_df = pd.DataFrame()
     if nrow != 'all':
         df = df.head(nrow)
+
+    rows_read = pd.DataFrame()
     # loop through dois and retrieve metrics for each
     for i,r in df.iterrows():
+        rows_read = rows_read.append(r)
         doi = r['DOI']
         title = r['title']
         if doi != '' and doi != '-':
@@ -31,14 +34,14 @@ def main(in_path, nrow = 'all'):
             scopus_journal_data = retrieve_scopus_journal_data(r['ISSN']) if 'ISSN' in r.keys() else {}
 
             # join metrics together in row
-            row = {'DOI': doi, 'title': title,
-            **plumx_data, **altmetric_data, **scopus_cited_data, **scopus_journal_data}
+            row = {'DOI': doi, 'title': title, **plumx_data, **altmetric_data, **scopus_cited_data, **scopus_journal_data}
 
-            #
             scores_df = scores_df.append(pd.Series(row), ignore_index=True)
-
+        else:
+            row = {'DOI': doi, 'title': title}
+            scores_df = scores_df.append(pd.Series(row), ignore_index=True)
     # join the dataframes and write to csv
-    all_data = merge_scores_with_publications(scores_df,df)
+    all_data = merge_scores_with_publications(scores_df,rows_read)
     write_metrics(all_data, OUTPATH)
 
     # write_to_google_sheet()
@@ -53,7 +56,7 @@ def read_dois(path):
     return pd.read_csv(path)
 
 def write_metrics(df, path):
-    df.to_csv(path, index=False)
+    df.to_csv(path)
     return
 
 

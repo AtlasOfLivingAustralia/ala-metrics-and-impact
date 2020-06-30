@@ -3,7 +3,7 @@ import pandas as pd
 import config
 import requests
 import sys
-#
+import re
 # library_id = config.LIBRARY_ID
 # api_key = config.ZOTERO_API_KEY
 # library_type = 'group'
@@ -31,7 +31,7 @@ def retrieve_data(library_id, api_key, library_type, outfile):
 def extract_item_data(data):
     row = {
         'key': data['key'],
-        'type': format_type(data['itemType'])
+        'type': format_item_type(data['itemType'])
     }
 
     # additional fields
