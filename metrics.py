@@ -73,21 +73,34 @@ def retrieve_plumx_data(doi):
         return {}
     stats = {}
 
+#    for i in data:
+#        if i['name'] == 'citation':
+#            stats['Citations [PlumX]'] = i['total']
+#        elif i['name'] == 'mention':
+#            for j in i['count_types']:
+#                if j['name'] == 'ALL_BLOG_COUNT':
+#                    stats['Blogs [PlumX]'] = j['total']
+#                elif j['name'] == 'NEWS_COUNT':
+#                    stats['News [PlumX]'] = j['total']
+#        elif i['name'] == 'socialMedia':
+#            for j in i['count_types']:
+#                if j['name'] == 'TWEET_COUNT':
+#                    stats['Tweets [PlumX]'] = j['total']
+#                elif j['name'] == 'FACEBOOK_COUNT':
+#                    stats['Facebook [PlumX]'] = j['total']
+
     for i in data:
-        if i['name'] == 'citation':
+        if i['name'] == 'capture':
+            stats['Captures [PlumX]'] = i['total']
+        elif i['name'] == 'citation':
             stats['Citations [PlumX]'] = i['total']
         elif i['name'] == 'mention':
-            for j in i['count_types']:
-                if j['name'] == 'ALL_BLOG_COUNT':
-                    stats['Blogs [PlumX]'] = j['total']
-                elif j['name'] == 'NEWS_COUNT':
-                    stats['News [PlumX]'] = j['total']
+            stats['Mentions [PlumX]'] = i['total']
         elif i['name'] == 'socialMedia':
-            for j in i['count_types']:
-                if j['name'] == 'TWEET_COUNT':
-                    stats['Tweets [PlumX]'] = j['total']
-                elif j['name'] == 'FACEBOOK_COUNT':
-                    stats['Facebook [PlumX]'] = j['total']
+            stats['Social Media [PlumX]'] = i['total']
+        elif i['name'] == 'usage':
+            stats['Usage [PlumX]'] = i['total']
+
 
     return stats
 
