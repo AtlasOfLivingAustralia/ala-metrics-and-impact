@@ -4,10 +4,7 @@ import config
 import requests
 import sys
 import re
-<<<<<<< HEAD
-=======
-#
->>>>>>> af4830a2974e0c7a6670259abb7c5297d4685782
+
 # library_id = config.LIBRARY_ID
 # api_key = config.ZOTERO_API_KEY
 # library_type = 'group'
