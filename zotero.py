@@ -45,6 +45,7 @@ def extract_item_data(data):
     row['ISBN'] = data['ISBN'] if 'ISBN' in data.keys() else ""
     row['ISSN'] = data['ISSN'] if 'ISSN' in data.keys() else ""
     row['extra'] = data['extra'] if 'extra' in data.keys() else ""
+    row['tags'] = format_one_line_tags(data['tags']) if 'tags' in data.keys() else ""
     tags = format_tags(data['tags']) if 'tags' in data.keys() else {}
     row = {**row, **tags}
 
@@ -91,6 +92,12 @@ def format_tags(tags):
                 print(f'Tag: \"{t["tag"]}\" found but not counted')
 
     return tag_dict
+
+def format_oneline_tags(tags):
+      tag_list = []
+      for t in tags:
+          tag_list.append(t['tag'])
+      return tag_list
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
