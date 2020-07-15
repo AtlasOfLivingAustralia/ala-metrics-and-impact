@@ -93,7 +93,7 @@ def format_tags(tags):
 
     return tag_dict
 
-def format_oneline_tags(tags):
+def format_one_line_tags(tags):
       tag_list = []
       for t in tags:
           tag_list.append(t['tag'])
