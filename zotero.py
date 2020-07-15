@@ -82,8 +82,13 @@ def format_tags(tags):
     for t in tags:
         if t['tag'] in tag_dict.keys():
             tag_dict[t['tag']] = 1
-        elif t['tag'].split(' - ')[1] in tag_dict.keys():
-            tag_dict[t['tag'].split(' - ')[1]] = 1
+        else:
+            try:
+                k = t['tag'].split(' - ')[1]
+                if k in tag_dict.keys():
+                    tag_dict[k] = 1
+            except (IndexError,KeyError):
+                print(f'Tag: \"{t["tag"]}\" found but not counted')
 
     return tag_dict
 
