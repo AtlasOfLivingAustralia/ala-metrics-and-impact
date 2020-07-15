@@ -160,6 +160,7 @@ def retrieve_scopus_journal_data(issn):
 
 
 if __name__ == '__main__':
+    input("To run this script you need to be connected to the CSIRO VPN.\n Once you're connected, press Enter to continue.")
     if len(sys.argv) < 2:
         print('Error: Please provide a path to an input file')
         exit()
