@@ -16,7 +16,7 @@ OUTPATH = 'publication_metrics.csv'
 def main(in_path, nrow = 'all'):
     # read in zotero data
     df = read_dois(in_path)
-    print(len(set(df['DOI'])))
+    print(f'This file has {len(set(df["DOI"]))} unique DOIs')
     scores_df = pd.DataFrame()
     if nrow != 'all':
         df = df.head(nrow)
@@ -24,6 +24,8 @@ def main(in_path, nrow = 'all'):
     rows_read = pd.DataFrame()
     # loop through dois and retrieve metrics for each
     for i,r in df.iterrows():
+        if i % 10 == 0:
+            print(f'{i} rows completed')
         rows_read = rows_read.append(r)
         doi = r['DOI']
         title = r['title']
