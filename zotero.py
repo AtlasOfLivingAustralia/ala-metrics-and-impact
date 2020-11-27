@@ -45,10 +45,10 @@ def extract_item_data(data):
     row['ISBN'] = data['ISBN'] if 'ISBN' in data.keys() else ""
     row['ISSN'] = data['ISSN'] if 'ISSN' in data.keys() else ""
     row['extra'] = data['extra'] if 'extra' in data.keys() else ""
+    row['archive'] = data['archive'] if 'archive' in data.keys() else ""
     row['tags'] = format_one_line_tags(data['tags']) if 'tags' in data.keys() else ""
     tags = format_tags(data['tags']) if 'tags' in data.keys() else {}
     row = {**row, **tags}
-
     return row
 
 def format_item_type(type):
